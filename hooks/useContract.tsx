@@ -6,38 +6,57 @@ import useSigner from "./useSigner";
 const useContract = () => {
     const { Signer } = useSigner();
 
-    console.log(Signer);
-
     const connect = () => {
-        const contract = new ethers.Contract(
+        if (!Signer) throw new Error("Signer not initialized");
+        return new ethers.Contract(
             MetaData["contract-Address"],
             MetaData.abi,
             Signer
-        )
+        );
+    };
 
-        return contract;
-    }
+    const connectProvider = () => {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        return new ethers.Contract(
+            MetaData["contract-Address"],
+            MetaData.abi,
+            provider
+        );
+    };
 
+    // -------------------
+    // WRITE FUNCTION
+    // -------------------
     const CreateProduce = async ({ name, quantity, price, ipfsHash }: createProduce) => {
         try {
-            const createproducetx = await connect().createProduce(
-                name,
-                quantity,
-                price,
-                ipfsHash
-            )
-
-            const reciept = await createproducetx.wait();
-            return reciept;
+            const contract = connect();
+            const tx = await contract.createProduce(name, quantity, price, ipfsHash);
+            const receipt = await tx.wait();
+            return receipt;
         } catch (error) {
             console.error("Error creating produce:", error);
         }
-    }
+    };
+
+    // -------------------
+    // READ FUNCTION
+    // -------------------
+    const ProduceCount = async () => {
+        try {
+            const contract = connectProvider();
+            const produceCount = await contract.produceCount();
+            const formatted = await produceCount.toString();
+            return await formatted;
+        } catch (error) {
+            console.error("Error fetching produce count:", error);
+        }
+    };
 
     return {
         connect,
-        CreateProduce
-    }
-}
+        CreateProduce,
+        ProduceCount,
+    };
+};
 
-export default useContract
+export default useContract;

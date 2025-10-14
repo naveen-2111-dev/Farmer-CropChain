@@ -6,12 +6,30 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { useAccount } from 'wagmi';
 
 import Cameraa from '@/components/camera';
+import useContract from '@/hooks/useContract';
 import { NewsArticle } from '@/types';
 
 const Page = () => {
     const [showCamera, setShowCamera] = useState(false);
     const [news, setNews] = useState<NewsArticle[]>([]);
+    const [produceCount, setProduceCount] = useState<string>("0");
     const { isConnected } = useAccount();
+
+    const { ProduceCount } = useContract();
+
+    useEffect(() => {
+        const fetchProduceCount = async () => {
+            try {
+                const count = await ProduceCount();
+                setProduceCount(count || "0");
+            } catch (error) {
+                console.error("Failed to fetch produce count:", error);
+                setProduceCount("0");
+            }
+        };
+
+        fetchProduceCount();
+    }, [ProduceCount]);
 
     const priceData = [
         { month: 'Jan', wheat: 250, rice: 180, corn: 200 },
@@ -87,7 +105,7 @@ const Page = () => {
                             </span>
                         </div>
                         <h3 className="text-gray-600 text-sm font-medium mb-1">Total Produce</h3>
-                        <p className="text-3xl font-bold text-gray-900">24,580</p>
+                        <p className="text-3xl font-bold text-gray-900">{produceCount || 0}</p>
                         <p className="text-xs text-gray-500 mt-1">tons this year</p>
                     </div>
 
