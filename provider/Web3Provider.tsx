@@ -24,7 +24,7 @@ const Web3Provider = ({ children }: { children: React.ReactNode }) => {
     return (
         <WagmiProvider config={config}>
             <QueryClientProvider client={queryClient}>
-                <RainbowKitProvider>
+                <RainbowKitProvider modalSize="compact">
                     {children}
                 </RainbowKitProvider>
             </QueryClientProvider>
