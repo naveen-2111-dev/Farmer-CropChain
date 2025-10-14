@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Web3Provider from "@/provider/Web3Provider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -30,7 +29,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Web3Provider>
-          <Navbar />
           {children}
         </Web3Provider>
       </body>
