@@ -4,21 +4,29 @@ import useContract from '@/hooks/useContract';
 import Upload from '@/utils/pinata';
 import { ArrowRight, CameraIcon } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import QRCode from 'react-qr-code';
 
-const Cameraa = ({ showCamera, setShowCamera }: { showCamera: boolean, setShowCamera: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const Cameraa = ({
+    showCamera,
+    setShowCamera,
+}: {
+    showCamera: boolean;
+    setShowCamera: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [photo, setPhoto] = useState<string | null>(null);
+    const [qr, setQr] = useState<string | null>(null); // IPFS hash
     const [formm, setForm] = useState<createProduce>({
-        name: "",
+        name: '',
         quantity: 0,
         price: 0,
     });
-
     const [isUploading, setIsUploading] = useState(false);
 
     const { CreateProduce } = useContract();
 
+    // -------- CAMERA SETUP --------
     useEffect(() => {
         if (showCamera) {
             (async () => {
@@ -26,51 +34,95 @@ const Cameraa = ({ showCamera, setShowCamera }: { showCamera: boolean, setShowCa
                     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                     if (videoRef.current) videoRef.current.srcObject = stream;
                 } catch (err) {
-                    console.error("Camera access denied:", err);
+                    console.error('Camera access denied:', err);
                 }
             })();
         }
     }, [showCamera]);
 
+    // -------- CAPTURE PHOTO --------
     const handleCapture = () => {
         if (!videoRef.current || !canvasRef.current) return;
         const canvas = canvasRef.current;
         const video = videoRef.current;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
+        const ctx = canvas.getContext('2d');
         ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imgData = canvas.toDataURL("image/png");
+        const imgData = canvas.toDataURL('image/png');
         setPhoto(imgData);
 
+        // Stop camera stream after capture
         const tracks = (videoRef.current?.srcObject as MediaStream)?.getTracks();
         tracks?.forEach((t) => t.stop());
     };
 
+    // -------- HANDLE NEXT (UPLOAD + CREATE PRODUCE) --------
     const handleNext = async () => {
         if (!photo) {
-            alert("please capture the photo");
+            alert('Please capture the photo first');
             return;
         }
+
+        if (!formm.name || formm.quantity <= 0 || formm.price <= 0) {
+            alert('Please fill all fields with valid values');
+            return;
+        }
+
         setIsUploading(true);
+
         try {
-            const result = await Upload(photo);
-            await CreateProduce({
+            const uploadResult = await Upload(photo);
+
+            const ipfsHash =
+                uploadResult?.ipfsHash ||
+                uploadResult?.IpfsHash ||
+                uploadResult?.cid ||
+                uploadResult?.path ||
+                '';
+
+            if (!ipfsHash) throw new Error('IPFS hash not found in upload result');
+
+            console.log('Creating produce on blockchain...');
+            const tx = await CreateProduce({
                 ...formm,
-                ipfsHash: result.ipfsHash || "",
-            })
+                ipfsHash,
+            });
+            console.log('Blockchain TX success:', tx);
+
+            setQr(ipfsHash);
 
             setPhoto(null);
+            setForm({ name: '', quantity: 0, price: 0 });
         } catch (error) {
-            console.error("Failed to upload:", error);
-            alert("Failed to upload image. Please try again.");
+            console.error('Error in handleNext:', error);
+            alert(`Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            setQr(null);
         } finally {
             setIsUploading(false);
         }
-
-        setShowCamera(false);
-        setPhoto(null);
     };
+
+    if (qr) {
+        return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4">
+                <div className="bg-white rounded-2xl p-6 max-w-md w-full text-center shadow-lg">
+                    <h3 className="text-xl font-bold mb-4 text-gray-900">Produce QR Generated 🎉</h3>
+                    <QRCode value={qr} size={180} className="mx-auto mb-4" />
+                    <p className="text-gray-600 text-sm break-all">IPFS Hash: {qr}</p>
+                    <button
+                        onClick={() => {
+                            setQr(null);
+                            setShowCamera(false);
+                        }}
+                        className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all"
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -108,41 +160,35 @@ const Cameraa = ({ showCamera, setShowCamera }: { showCamera: boolean, setShowCa
                                     <input
                                         type="text"
                                         placeholder="Name"
-                                        onChange={(e) =>
-                                            setForm((prev) => ({
-                                                ...prev,
-                                                name: e.target.value,
-                                            }))
-                                        }
-                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        value={formm.name}
+                                        onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400"
                                     />
                                 </label>
+
                                 <label className="flex flex-col gap-1">
                                     <span className="text-sm font-medium text-gray-700">Quantity</span>
                                     <input
                                         type="number"
                                         placeholder="Qty"
+                                        value={formm.quantity || ''}
                                         onChange={(e) =>
-                                            setForm((prev) => ({
-                                                ...prev,
-                                                quantity: Number(e.target.value),
-                                            }))
+                                            setForm((p) => ({ ...p, quantity: Number(e.target.value) }))
                                         }
-                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400"
                                     />
                                 </label>
+
                                 <label className="flex flex-col gap-1">
                                     <span className="text-sm font-medium text-gray-700">Price in ETH</span>
                                     <input
                                         type="number"
                                         placeholder="Price in ETH"
+                                        value={formm.price || ''}
                                         onChange={(e) =>
-                                            setForm((prev) => ({
-                                                ...prev,
-                                                price: Number(e.target.value),
-                                            }))
+                                            setForm((p) => ({ ...p, price: Number(e.target.value) }))
                                         }
-                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        className="p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-400"
                                     />
                                 </label>
                             </div>
@@ -171,26 +217,18 @@ const Cameraa = ({ showCamera, setShowCamera }: { showCamera: boolean, setShowCa
                 ) : (
                     <div className="flex justify-end gap-3 mt-4">
                         <button
-                            className="flex-1 flex gap-2 justify-center items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-semibold hover:shadow-lg transition-all"
                             onClick={handleNext}
                             disabled={isUploading}
+                            className="flex-1 flex gap-2 justify-center items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-full font-semibold hover:shadow-lg transition-all"
                         >
-                            {isUploading ? (
-                                <>
-                                    Uploading...
-                                </>
-                            ) : (
-                                <>
-                                    Next <ArrowRight className="w-5 h-5" />
-                                </>
-                            )}
+                            {isUploading ? 'Uploading...' : <>Next <ArrowRight className="w-5 h-5" /></>}
                         </button>
                     </div>
                 )}
                 <canvas ref={canvasRef} className="hidden" />
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default Cameraa;
