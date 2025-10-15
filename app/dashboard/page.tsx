@@ -32,12 +32,12 @@ const Page = () => {
     }, [ProduceCount]);
 
     const priceData = [
-        { month: 'Jan', wheat: 250, rice: 180, corn: 200 },
-        { month: 'Feb', wheat: 280, rice: 190, corn: 210 },
-        { month: 'Mar', wheat: 260, rice: 195, corn: 205 },
-        { month: 'Apr', wheat: 290, rice: 200, corn: 220 },
-        { month: 'May', wheat: 310, rice: 210, corn: 230 },
-        { month: 'Jun', wheat: 300, rice: 205, corn: 225 },
+        { month: 'Jan', Produced: 250, Income: 180 },
+        { month: 'Feb', Produced: 280, Income: 190 },
+        { month: 'Mar', Produced: 260, Income: 195 },
+        { month: 'Apr', Produced: 290, Income: 200 },
+        { month: 'May', Produced: 310, Income: 210 },
+        { month: 'Jun', Produced: 300, Income: 205 },
     ];
 
     useEffect(() => {
@@ -114,10 +114,9 @@ const Page = () => {
                             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
                                 <Truck className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-orange-600 text-sm font-semibold">Live</span>
                         </div>
                         <h3 className="text-gray-600 text-sm font-medium mb-1">In Transit</h3>
-                        <p className="text-3xl font-bold text-gray-900">1,240</p>
+                        <p className="text-3xl font-bold text-gray-900">{(Number(produceCount) || 0)}</p>
                         <p className="text-xs text-gray-500 mt-1">tons shipping</p>
                     </div>
 
@@ -129,7 +128,7 @@ const Page = () => {
                             <div className="text-4xl">💰</div>
                         </div>
                         <h3 className="text-gray-600 text-sm font-medium mb-1">Total Revenue</h3>
-                        <p className="text-3xl font-bold text-gray-900">$456,890</p>
+                        <p className="text-3xl font-bold text-gray-900">${(3200 * Number(produceCount) || 0) / 2}</p>
                         <p className="text-xs text-gray-500 mt-1">all time earnings</p>
                     </div>
 
@@ -141,8 +140,8 @@ const Page = () => {
                             <span className="text-purple-600 text-xs font-semibold">Holesky</span>
                         </div>
                         <h3 className="text-gray-600 text-sm font-medium mb-1">Total Earnings</h3>
-                        <p className="text-3xl font-bold text-gray-900">45.8 ETH</p>
-                        <p className="text-xs text-gray-500 mt-1">≈ $85,240 USD</p>
+                        <p className="text-3xl font-bold text-gray-900">{(45 * Number(produceCount) || 0) / 2} ETH</p>
+                        <p className="text-xs text-gray-500 mt-1">≈ price in holesky</p>
                     </div>
                 </div>
 
@@ -152,15 +151,11 @@ const Page = () => {
                         <div className="flex space-x-4 text-sm">
                             <div className="flex items-center space-x-2">
                                 <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                <span className="text-gray-600">Wheat</span>
+                                <span className="text-gray-600">Produced</span>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                <span className="text-gray-600">Rice</span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                <span className="text-gray-600">Corn</span>
+                                <span className="text-gray-600">Income</span>
                             </div>
                         </div>
                     </div>
@@ -176,9 +171,8 @@ const Page = () => {
                                     borderRadius: '8px'
                                 }}
                             />
-                            <Line type="monotone" dataKey="wheat" stroke="#10b981" strokeWidth={3} />
-                            <Line type="monotone" dataKey="rice" stroke="#3b82f6" strokeWidth={3} />
-                            <Line type="monotone" dataKey="corn" stroke="#f97316" strokeWidth={3} />
+                            <Line type="monotone" dataKey="Produced" stroke="#10b981" strokeWidth={3} />
+                            <Line type="monotone" dataKey="Income" stroke="#3b82f6" strokeWidth={3} />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>

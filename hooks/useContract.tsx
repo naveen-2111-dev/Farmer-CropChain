@@ -4,7 +4,7 @@ import { createProduce } from "./_types";
 import useSigner from "./useSigner";
 
 const useContract = () => {
-    const { Signer } = useSigner();
+    const { Signer, address } = useSigner();
 
     const connect = () => {
         if (!Signer) throw new Error("Signer not initialized");
@@ -44,7 +44,7 @@ const useContract = () => {
     const ProduceCount = async () => {
         try {
             const contract = connectProvider();
-            const produceCount = await contract.produceCount();
+            const produceCount = await contract.getFarmerProduceCount(address);
             const formatted = await produceCount.toString();
             return await formatted;
         } catch (error) {
