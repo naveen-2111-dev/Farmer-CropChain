@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
             cid: uploadFile.IpfsHash || "",
             url: `https://gateway.pinata.cloud/ipfs/${uploadFile.IpfsHash || ""}`
         });
-    } catch (error: any) {
+    } catch (error) {
         console.error("Upload error:", error);
         return NextResponse.json({
             error: 'Upload failed',
-            details: error.message
+            details: error
         }, { status: 500 });
     }
 }

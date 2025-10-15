@@ -1,3 +1,5 @@
+"use client";
+
 import MetaData from "@/data";
 import { ethers } from "ethers";
 import { createProduce } from "./_types";
